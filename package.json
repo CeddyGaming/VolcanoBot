@@ -1,0 +1,23 @@
+{
+  "name": "acornhub.discordbot",
+  "version": "1.0.0",
+  "description": "AcornHub's discord bot",
+  "main": "index.js",
+  "dependencies": {
+    "discord.js": "^12.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AcornProductions/acornhub.discordbot.git"
+  },
+  "author": "Cedric Tabban",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AcornProductions/acornhub.discordbot/issues"
+  },
+  "homepage": "https://github.com/AcornProductions/acornhub.discordbot#readme"
+}
