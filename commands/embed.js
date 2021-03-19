@@ -1,7 +1,7 @@
 module.exports = {
     name: 'embed',
     description: 'Creates an embed.',
-    execute(message, args, client, discord){
+    execute(message, args, client){
         var sentToUser = {
             embed: {
                 title: "Volcano Embed Maker (because we want to look good)",
@@ -16,10 +16,10 @@ module.exports = {
             botMsg = await message.channel.send(sentToUser)
         }
         beginInput()
-        var filter = m => !m.author.bot
-        var collector = new discord.MessageCollector(message.channel, filter)
+        var filter = m => m.author.id == message.author.id
+        var collector = message.channel.createMessageCollector(filter, {time: 60000})
         var page = 1
-        var status = 'ok'
+        var status = 'timeout'
         var createdEmbed = {embed: {}}
         var editing = false
         var previousMsgId
@@ -36,23 +36,23 @@ module.exports = {
                         botMsg.edit(sentToUser)
                         eachMsg.delete()
                         page++
-                    } else if(eachMsg.content.toLowerCase() == 'edit'){
-                        sentToUser.embed.description = '**Please provide a channel to send the message to.**'
-                        botMsg.edit(sentToUser)
-                        eachMsg.delete()
-                        editing = true
-                        page++
                     } else if(eachMsg.content.toLowerCase() == 'no'){
                         eachMsg.delete()
                         status = 'canceled'
                         collector.stop();
+                    } else {
+                        sentToUser.embed.description = '**Please provide a channel to send the message to.**'
+                        botMsg.edit(sentToUser)
+                        eachMsg.delete()
+                        previousMsgId = previousMsgId
+                        editing = true
+                        page = 5
                     }
                     break
                 case 2:
                     client.channels.fetch(eachMsg.content.replace('<', "").replace('>', "").replace('#', ""))
                         .then(channel => {
-                            channel = embedChannel
-                            console.log(channel)
+                            embedChannel = eachMsg.content.replace('<', "").replace('>', "").replace('#', "")
                             if(!editing){
                                 sentToUser.embed.description = '**Please provide a title.**'
                                 botMsg.edit(sentToUser)
@@ -98,12 +98,12 @@ module.exports = {
                     botMsg.edit(sentToUser)
                     eachMsg.delete()
                     editing = true
-                    page++
-
+                    page = 2
+                    break
                 }
         })
         collector.on('end', collected => {
-            if(status == 'canceled'){
+            if(status == ('canceled' || 'timeout')){
                 sentToUser = {
                     color: 0xff0033,
                     title: 'Embed Canceled'
@@ -114,12 +114,15 @@ module.exports = {
                 }, 5000);
             } else if(status == 'done'){
                 //make embed
-                embedChannel.send(createdEmbed)
-                 sentToUser = {
+                sentToUser.embed = {
                     color: 0x00ff00,
                     title: 'Embed Created.'
                 }
                 botMsg.edit(sentToUser)
+                client.channels.fetch(embedChannel)
+                .then(channel => {
+                    channel.send(createdEmbed)
+                })
                 setTimeout(() => {
                     botMsg.delete()
                 }, 5000);

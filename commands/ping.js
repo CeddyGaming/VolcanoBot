@@ -7,6 +7,6 @@ module.exports = {
             title: 'Pong!',
             description: `Took ${Math.floor(message.createdTimestamp - Date.now()) % 1000}ms.`
         }
-        message.channel.send({embed: ping})
+        message.channel.senfd({embed: ping})
     }
 }
