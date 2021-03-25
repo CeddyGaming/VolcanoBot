@@ -2,20 +2,20 @@ module.exports = {
     name: 'reload',
     description: 'Reloads a command.',
     execute(message, args, client){
+        if(message.author.id != '215430126677131264') return
         if (!args.length) return message.channel.send(`You didn't pass any command to reload, ${message.author}!`);
         const commandName = args[0].toLowerCase();
         const command = message.client.commands.get(commandName)
             || message.client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
 
         if (!command) return message.channel.send(`There is no command with name or alias \`${commandName}\`, ${message.author}!`);
+        const fs = require('fs')
+        const commandFile = fs.readdirSync('./commands').includes(`${commandName}.js`);
 
-        const commandFolders = fs.readdirSync('./commands');
-        const folderName = commandFolders.find(folder => fs.readdirSync(`./commands/${folder}`).includes(`${commandName}.js`));
-
-        delete require.cache[require.resolve(`../${folderName}/${command.name}.js`)];
+        delete require.cache[require.resolve(`./${command.name}.js`)];
 
         try {
-            const newCommand = require(`../${folderName}/${command.name}.js`);
+            const newCommand = require(`./${command.name}.js`);
             message.client.commands.set(newCommand.name, newCommand);
             message.channel.send(`Command \`${command.name}\` was reloaded!`);
         } catch (error) {

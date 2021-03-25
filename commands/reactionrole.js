@@ -132,7 +132,6 @@ module.exports = {
         })
         const handleReaction = (reaction, user, add) => {
             if(user.id == '821763301503139891') return;
-            console.log(emojiToRoleObject)
             if(emojiToRoleObject[reaction._emoji.name]){
                 const { guild } = reaction.message
                 const role = guild.roles.fetch(emojiToRoleObject[reaction._emoji.name].replace('<@&', '').replace('>', ''))
