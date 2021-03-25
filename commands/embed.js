@@ -2,6 +2,7 @@ module.exports = {
     name: 'embed',
     description: 'Creates an embed.',
     execute(message, args, client){
+        if(!message.member.hasPermission('ADMINISTRATOR')) return;
         var sentToUser = {
             embed: {
                 title: "Volcano Embed Maker (because we want to look good)",
@@ -41,28 +42,37 @@ module.exports = {
                         status = 'canceled'
                         collector.stop();
                     } else {
-                        sentToUser.embed.description = '**Please provide a channel to send the message to.**'
+                        sentToUser.embed.description = '***Please provide a channel of the previous message. (gotta check if it exisits bub).**'
                         botMsg.edit(sentToUser)
                         eachMsg.delete()
-                        previousMsgId = previousMsgId
                         editing = true
-                        page = 5
+                        previousMsgId = eachMsg.content.toLowerCase()
+                        page = 2
                     }
                     break
                 case 2:
                     client.channels.fetch(eachMsg.content.replace('<', "").replace('>', "").replace('#', ""))
                         .then(channel => {
-                            embedChannel = eachMsg.content.replace('<', "").replace('>', "").replace('#', "")
+                            embedChannel = channel
                             if(!editing){
                                 sentToUser.embed.description = '**Please provide a title.**'
                                 botMsg.edit(sentToUser)
                                 eachMsg.delete()
                                 page++
                             } else if(editing){
-                                sentToUser.embed.description = '**Please provide the message ID of the embed we had made. You can do this by enabling Developer Mode in your settings.**'
-                                botMsg.edit(sentToUser)
-                                eachMsg.delete()
-                                page = 5
+                                channel.messages.fetch(previousMsgId)
+                                .then(msg => {
+                                    sentToUser.embed.description = '**Please provide a title.**'
+                                    botMsg.edit(sentToUser)
+                                    eachMsg.delete()
+                                    page++
+                                })
+                                .catch(error => {
+                                    eachMsg.delete()
+                                    console.log(error)
+                                    status = 'messageNotFound'
+                                    collector.stop();
+                                })
                             }
                         })
                         .catch(error => {
@@ -82,28 +92,34 @@ module.exports = {
                     break
                 case 4:
                     if(eachMsg.content.toLowerCase() == 'skip'){
+                        sentToUser.embed.description = '**Please provide a footer image.**'
+                        eachMsg.delete()
+                        botMsg.edit(sentToUser)
+                        page++
+                    } else {
+                        createdEmbed.embed.description = eachMsg.content
+                        sentToUser.embed.description = '**Please provide a footer image.**'
+                        eachMsg.delete()
+                        botMsg.edit(sentToUser)
+                        page++
+                    }
+                    break
+                case 5: 
+                    if(eachMsg.content.toLowerCase() == 'skip'){
                         eachMsg.delete()
                         status = 'done'
                         collector.stop();
                     } else {
-                        createdEmbed.embed.description = eachMsg.content
+                        createdEmbed.embed.image = {url: eachMsg.content}
                         eachMsg.delete()
                         status = 'done'
                         collector.stop();
                     }
                     break
-                case 5:
-                    //editing msg
-                    sentToUser.embed.description = '**Please provide the message ID of the embed we had made. You can do this by enabling Developer Mode in your settings.**'
-                    botMsg.edit(sentToUser)
-                    eachMsg.delete()
-                    editing = true
-                    page = 2
-                    break
-                }
+            }
         })
         collector.on('end', collected => {
-            if(status == ('canceled' || 'timeout')){
+            if(status == 'canceled'){
                 sentToUser = {
                     color: 0xff0033,
                     title: 'Embed Canceled'
@@ -114,15 +130,45 @@ module.exports = {
                 }, 5000);
             } else if(status == 'done'){
                 //make embed
-                sentToUser.embed = {
-                    color: 0x00ff00,
-                    title: 'Embed Created.'
+                if(!editing){
+                    embedChannel.send(createdEmbed)
+                    sentToUser = {
+                        color: 0x00ff00,
+                        title: 'Embed Created.'
+                    }
+                    botMsg.edit(sentToUser)
+                    setTimeout(() => {
+                        botMsg.delete()
+                    }, 5000);
+                } else {
+                    embedChannel.messages.fetch(previousMsgId)
+                    .then(msg => {
+                        msg.edit(createdEmbed)
+                        sentToUser = {
+                            color: 0x00ff00,
+                            title: 'Embed Edited.'
+                        }
+                        botMsg.edit(sentToUser)
+                        setTimeout(() => {
+                            botMsg.delete()
+                        }, 5000);
+                    })
+                }   
+            } else if(status == 'channelNotFound'){
+                sentToUser = {
+                    color: 0xff0033,
+                    title: 'Error: Channel not found.'
                 }
                 botMsg.edit(sentToUser)
-                client.channels.fetch(embedChannel)
-                .then(channel => {
-                    channel.send(createdEmbed)
-                })
+                setTimeout(() => {
+                    botMsg.delete()
+                }, 5000);
+            } else if(status == 'messageNotFound'){
+                sentToUser = {
+                    color: 0xff0033,
+                    title: 'Error: Message not found.'
+                }
+                botMsg.edit(sentToUser)
                 setTimeout(() => {
                     botMsg.delete()
                 }, 5000);
