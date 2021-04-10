@@ -16,6 +16,7 @@ for (const file of commandFiles) {
 
 //Events
 client.on('ready', () => {
+    client.user.setPresence({ activity: { name: `with the dead volcanos in Hawaii.` }, status: 'online' })
     console.log(`Client logged in as ${client.user}`)
 })
 
@@ -28,7 +29,7 @@ client.on('message', (message) => {
     if (!client.commands.has(commandName)) return;
 
     const command = client.commands.get(commandName);
-
+    
     try {
         command.execute(message, args, client);
     } catch (error) {

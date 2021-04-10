@@ -12,24 +12,23 @@ module.exports = {
                     icon_url: message.author.avatarURL
                 },
                 title: "Volcano Suggestion",
-                description: args[0],
+                description: args,
                 footer: {
                     text: "If you find this suggestion to be disrespectful, please report it."
                 }
             }
         }
-
-        client.channels.fetch('822520079462826024').then(channel => {
-            var suggestionMsg
+        var suggestionMsg
+        client.channels.fetch('822520079462826024').then(function(channel){
             async function beginInput(){
                 suggestionMsg = await channel.send(embed)
+                setTimeout(() => {
+                    suggestionMsg.react('👍')
+                    .then(() => suggestionMsg.react('👎'))
+                    .catch(() => console.error('One of the emojis failed to react.'));
+                }, 2000);
             }
             beginInput()
-            console.log(channel)
-            suggestionMsg.react('👍')
-            .then(() => suggestionMsg.react('👎'))
-            .then(() => suggestionMsg.react('❗'))
-            .catch(() => console.error('One of the emojis failed to react.'));
         })
     }
 }
